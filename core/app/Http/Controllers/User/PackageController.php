@@ -303,9 +303,9 @@ class PackageController extends Controller
                 self::generate_package_transactions($package, $ref_user, $user, $bonus, STATUS::PACKAGE_NETWORK_BONUS);
                 self::generate_transactions($package, $ref_user, $user, $bonus, STATUS::PACKAGE_NETWORK_BONUS);
 
-                $user_weekly_income = WeeklyIncome::where('user_id', $ref_user->id)->first();
-                $user_weekly_income->weekly_income += $bonus;
-                $user_weekly_income->save();
+                // $user_weekly_income = WeeklyIncome::where('user_id', $ref_user->id)->first();
+                // $user_weekly_income->weekly_income += $bonus;
+                // $user_weekly_income->save();
 
                 $ref_user_packages = PackageUser::where('status', STATUS::PACKAGE_PURCHASED)->where('user_id', $ref_user->id)->orderBy('created_at', 'asc')->get();
                 foreach($ref_user_packages as $ref_user_package){

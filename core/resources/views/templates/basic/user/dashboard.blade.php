@@ -63,7 +63,7 @@
                         @lang('Balance Day! Withdrawals available from Sunday to Friday.')
                     </span>
                     <br>
-                    <small><i> <a class="link-color" href="{{ route('user.deposit.index', ['brokerage_fee' => $weekly_info]) }}">@lang('Click Here to Deposit')</a></i></small>
+                    <small><i> <a class="link-color" href="{{ route('user.deposit.index', ['brokerage_fee' => $weekly_info->weekly_income]) }}">@lang('Click Here to Deposit')</a></i></small>
                 </p>
             </div>
         @else
