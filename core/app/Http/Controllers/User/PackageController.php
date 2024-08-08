@@ -114,15 +114,17 @@ class PackageController extends Controller
         self::generate_transactions($package, $ref_user, $user, $ref_user_bonus, STATUS::PACKAGE_INVITE_BONUS);
         self::generate_package_transactions($package, $ref_user, $user, $ref_user_bonus, STATUS::PACKAGE_INVITE_BONUS);
 
+
         if($ref_user_packages){
             foreach($ref_user_packages as $ref_user_package){
-                $ref_user_income_package = PackageIncomeUser::where('user_id', $ref_user_package->user_id)->where('package_id', $ref_user_package->package_id)->first();
+                $ref_user_income_package = PackageIncomeUser::where('status', STATUS::PACKAGE_PURCHASED)->where('user_id', $ref_user_package->user_id)->where('package_id', $ref_user_package->package_id)->first();
                 $package_uncom_amount = $ref_user_income_package->max_income - $ref_user_income_package->current_total_income;
                 if($ref_user_bonus >= $package_uncom_amount){
                     $ref_user_package->status = STATUS::PACKAGE_RELEASED;
                     $ref_user_package->save();
                     $ref_user_income_package->current_total_income = 0;
                     $ref_user_income_package->current_daily_income = 0;
+                    $ref_user_income_package->status = STATUS::PACKAGE_RELEASED;
                     $ref_user_income_package->save();
                     $ref_user_bonus -= $package_uncom_amount;
                 } else{
@@ -306,6 +308,10 @@ class PackageController extends Controller
                 $user_weekly_income->save();
                 
                 if($ref_user_income_package->current_total_income >= $package->max_income){
+                    $ref_user_income_package->current_total_income = 0;
+                    $ref_user_income_package->current_daily_income = 0;
+                    $ref_user_income_package->status = STATUS::PACKAGE_RELEASED;
+                    $ref_user_income_package->save();
                     self::release_package($package, $ref_user);
                 }
                 $admin_bonus -= $bonus;
@@ -365,7 +371,7 @@ class PackageController extends Controller
                 $duration = $duration * 24;
             }
             // if ($package_user->updated_at->lt(Carbon::now()->subHours($duration))) {
-            if ($package_user->updated_at->lt(Carbon::now()->subSeconds(5))) {     // For test
+            if ($package_user->updated_at->lt(Carbon::now()->subSeconds(1))) {     // For test
                 if ($current_day == 6) {
                     
                     if ($user_weekly_income && $today_deposit_amount >= $user_weekly_income->weekly_fee) {
@@ -387,7 +393,7 @@ class PackageController extends Controller
                             $package_income_user->current_daily_income = $release_amount + $package_income_user->rising_income;
                             $package_income_user->save();
                         } else {
-                            $release_amount = $package_income_user->current_total_income + $release_amount - $package_income_user->max_income;
+                            $release_amount = $package_income_user->max_income - $package_income_user->current_total_income;
                             $user->balance += $release_amount;
                             $user->save();
                             $user_weekly_income->weekly_income = 0;
@@ -424,7 +430,7 @@ class PackageController extends Controller
                             self::generate_bonus_distributions($package, $user);
                             
                         } else {
-                            $release_amount = $package_income_user->current_total_income + $release_amount - $package_income_user->max_income;
+                            $release_amount = $package_income_user->max_income - $package_income_user->current_total_income;
                             $user->balance += $release_amount;
                             $user->save();
                             $user_weekly_income->weekly_income += $release_amount;
