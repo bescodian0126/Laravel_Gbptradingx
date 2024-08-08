@@ -28,7 +28,6 @@ class PaymentController extends Controller
 
     public function depositInsert(Request $request)
     {
-
         $request->validate([
             'amount' => 'required|numeric|gt:0',
             'gateway' => 'required',

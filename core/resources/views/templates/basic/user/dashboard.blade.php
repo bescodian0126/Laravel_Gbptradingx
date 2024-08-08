@@ -175,7 +175,7 @@
                    class="text-decoration-none text-dark w-100">  
                     <div class="dashboard-widget {{ auth()->user()->weekly_paid == 1 ? 'bg-danger' : '' }}">
                         <div class="d-flex justify-content-between">
-                            <h5 class="{{ auth()->user()->weekly_paid == 1 ? 'text-white' : 'text-secondary' }}">@lang('Brokerage fee (weekly)')</h5>
+                            <h5 class="{{ auth()->user()->weekly_paid == 1 ? 'text-white' : 'text-secondary' }}">@lang('Brokerage Fee (Weekly)')</h5>
                         </div>
                         <h3 class="{{ \Carbon\Carbon::now()->isTuesday() ? 'text-white' : 'text-secondary' }} my-4">{{ $weekly_info ? showAmount($weekly_info->weekly_fee) : 0 }} {{ __($general->cur_text) }}
                         </h3>

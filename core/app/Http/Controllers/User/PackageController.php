@@ -101,6 +101,14 @@ class PackageController extends Controller
         self::generate_package_users($package, $user);
         self::generate_package_transactions($package, $user, $user, $package->price, STATUS::PACKAGE_PURCHASED);    // 1 means purchase transaction
         self::generate_transactions($package, $user, $user, $package->price, STATUS::PACKAGE_PURCHASED);
+        
+        $ref_user = User::where('username', $user->ref_user)->first();
+        $ref_user_percent = 5;
+        $ref_user_bonus = $package->price * $ref_user_percent / 100;
+        $ref_user->balance += $ref_user_bonus;
+        $ref_user->save();
+        self::generate_package_transactions($package, $ref_user, $user, $ref_user_bonus, STATUS::PACKAGE_INVITE_BONUS);
+        self::generate_transactions($package, $ref_user, $user, $ref_user_bonus, STATUS::PACKAGE_INVITE_BONUS);
         // self::generate_bonus_distributions($package, $user);
 
         $notify[] = ['success', 'Investment Plan purchased successfully'];

@@ -70,14 +70,14 @@
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title m-0">@lang('Commission to tree info')</h5>
+                <h5 class="modal-title m-0">@lang('Daily Income Info')</h5>
                 <button class="close" data-bs-dismiss="modal" type="button" aria-label="Close">
                     <i class="las la-times"></i>
                 </button>
             </div>
             <div class="modal-body">
                 <span
-                    class="text--success">@lang('When you invite this number of users to purchase this plan, you will get bonus').
+                    class="text--success">@lang('When you purchase this plan you will get daily income!')
                 </span>
             </div>
             <div class="modal-footer">
@@ -91,14 +91,14 @@
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title m-0">@lang('Commission to tree info')</h5>
+                <h5 class="modal-title m-0">@lang('Brokerage Fee Info')</h5>
                 <button class="close" data-bs-dismiss="modal" type="button" aria-label="Close">
                     <i class="las la-times"></i>
                 </button>
             </div>
             <div class="modal-body">
                 <span
-                    class="text--success">@lang('When you invite this number of users to purchase this plan, you will get bonus').
+                    class="text--success">@lang('You have to deposit weekly fee on Saturdays if you want to continue on this plan').
                 </span>
             </div>
             <div class="modal-footer">

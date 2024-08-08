@@ -25,7 +25,7 @@
                             <div class="form-group">
                                 <label class="form-label">@lang('Amount')</label>
                                 <div class="input-group">
-                                    <input class="form-control form--control" name="amount" type="number" value="{{ old('amount', $deposit_amount) }}" step="any" autocomplete="off" @if ($deposit_amount > 0) disabled @endif required>
+                                    <input class="form-control form--control" name="amount" type="number" value="{{ $deposit_amount ? $deposit_amount : old('amount') }}" step="any" autocomplete="off" @if ($deposit_amount > 0) disabled @endif required>
                                     <span class="input-group-text">{{ $general->cur_text }}</span>
                                 </div>
                             </div>

@@ -159,7 +159,7 @@
                                 <input class = "form-control bonus bonus_price_edit" name = "bonus_price" type = "numeric" />
                             </div>
                             <div class="form-group col-md-6">
-                                <label>@lang('Weekely Fee')(%)</label>
+                                <label>@lang('Brokerage Fee (Weekly)')(%)</label>
                                 <input class = "form-control weekly_fee weekly_fee_edit" name = "weekly_fee" type = "numeric" />
                             </div>
                         </div>
@@ -236,11 +236,11 @@
                         </div>
                         <div class="row">
                             <div class="form-group col-md-6">
-                                <label>@lang('Network Bonus on Plan Profit(%)')</label>
+                                <label>@lang('Network Bonus on Plan Profit')(%)</label>
                                 <input class = "form-control bonus bonus_price" name = "bonus_price" type = "numeric" />
                             </div>
                             <div class="form-group col-md-6">
-                                <label>@lang('Weekely Fee')(%)</label>
+                                <label>@lang('Brokerage Fee (Weekly)')(%)</label>
                                 <input class = "form-control weekly_fee" name = "weekly_fee" type = "numeric" />
                             </div>
                         </div>
