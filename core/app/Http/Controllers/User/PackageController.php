@@ -95,9 +95,13 @@ class PackageController extends Controller
         $user->weekly_paid = 0;
         $user->save();
 
-        $weekly_income = new WeeklyIncome();
-        $weekly_income->user_id         = $user->id;
-        $weekly_income->save();
+        $weekly_income = WeeklyIncome::where('user_id', $user->id)->first();
+        if(!$weekly_income){
+            $weekly_income = new WeeklyIncome();
+            $weekly_income->user_id = $user->id;
+            $weekly_income->save();
+        }
+        
 
 
         self::generate_package_users($package, $user);
