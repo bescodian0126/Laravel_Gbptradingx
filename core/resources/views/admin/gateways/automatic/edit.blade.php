@@ -160,7 +160,7 @@
                                                             <label>@lang('Rate')</label>
                                                             <div class="input-group">
                                                                 <div class="input-group-text">1 {{ __($general->cur_text) }} =</div>
-                                                                <input type="number" step="any" class="form-control" name="currency[{{ $currencyIndex }}][rate]" value="{{ $gatewayCurrency->rate }}" required/>
+                                                                <input type="number" step="any" class="form-control" name="currency[{{ $currencyIndex }}][rate]" value="{{ getAmount($gatewayCurrency->rate) }}" required/>
                                                                 <div class="input-group-text"><span class="currency_symbol">{{ __($gatewayCurrency->baseSymbol()) }}</span></div>
                                                             </div>
                                                         </div>
