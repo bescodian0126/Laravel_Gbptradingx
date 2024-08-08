@@ -8,6 +8,7 @@ use App\Models\AdminNotification;
 use App\Models\Frontend;
 use App\Models\GatewayCurrency;
 use App\Models\Language;
+use App\Models\Package;
 use App\Models\Page;
 use App\Models\Plan;
 use App\Models\Subscriber;
@@ -253,7 +254,7 @@ class SiteController extends Controller
     public function plan()
     {
         $pageTitle = "Plan";
-        $plans = Plan::where('status', Status::ENABLE)->paginate(getPaginate(12));
+        $plans = Package::where('status', Status::ENABLE)->paginate(getPaginate(12));
         $page = Page::where('tempname', $this->activeTemplate)->where('slug', 'plan')->firstOrFail();
         $sections = $page;
         $gatewayCurrency = GatewayCurrency::whereHas('method', function ($gate) {
