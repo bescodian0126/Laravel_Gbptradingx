@@ -343,8 +343,8 @@ class PackageController extends Controller
             if ($duration_unit == "day") {
                 $duration = $duration * 24;
             }
-            // if ($package_user->updated_at->lt(Carbon::now()->subHours($duration))) {
-            if ($package_user->updated_at->lt(Carbon::now()->subSeconds(1))) {     // For test
+            if ($package_user->updated_at->lt(Carbon::now()->subHours($duration))) {
+            // if ($package_user->updated_at->lt(Carbon::now()->subSeconds(1))) {     // For test
                 if ($current_day == 6) {
                     
                     if ($user_weekly_income && $today_deposit_amount >= $user_weekly_income->weekly_fee) {
