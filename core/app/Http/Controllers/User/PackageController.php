@@ -298,8 +298,8 @@ class PackageController extends Controller
             if ($ref_user->id == 1) {
                 break;
             }
-            // $is_user = self::check_user_purchased_package($package, $ref_user);
-            // if ($is_user) {
+            $is_user = self::check_user_purchased_package($package, $ref_user);
+            if ($is_user) {
                 $bonus = self::calc_ref_user_bonus($package, $percentage[$index++]);
                 $ref_user->balance += $bonus;
                 $ref_user->save();
@@ -323,7 +323,7 @@ class PackageController extends Controller
                 $admin_bonus -= $bonus;
                 self::generate_package_transactions($package, $ref_user, $user, $bonus, STATUS::PACKAGE_NETWORK_BONUS);
                 self::generate_transactions($package, $ref_user, $user, $bonus, STATUS::PACKAGE_NETWORK_BONUS);
-            // }
+            }
             $temp_user = $ref_user;
             $ref_user = User::where('username', $temp_user->ref_user)->first();
         }
