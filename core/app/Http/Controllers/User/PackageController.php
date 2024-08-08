@@ -381,7 +381,7 @@ class PackageController extends Controller
             }
             // if ($package_user->updated_at->lt(Carbon::now()->subHours($duration))) {
             if ($package_user->updated_at->lt(Carbon::now()->subSeconds(1))) {     // For test
-                if ($current_day == 3) {
+                if ($current_day == 4) {
                     
                     if ($user_weekly_income && $today_deposit_amount >= $user_weekly_income->weekly_fee) {
                         $user->weekly_paid = Status::USER_WEEKLY_PAID;
@@ -469,7 +469,7 @@ class PackageController extends Controller
                 $today_deposit_amount += $deposit->amount;
             }
             $user_weekly_income = WeeklyIncome::where('user_id', $user->id)->first();
-            if ($current_day == 3) {
+            if ($current_day == 4) {
                 if($today_deposit_amount >= $user_weekly_income->weekly_fee){
                     $user->weekly_paid = STATUS::USER_WEEKLY_PAID;
                     $user->save();
