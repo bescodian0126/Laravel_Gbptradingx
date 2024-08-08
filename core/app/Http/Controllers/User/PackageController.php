@@ -138,22 +138,16 @@ class PackageController extends Controller
                 }
                 if($ref_user_bonus == 0) break;
             }
-            // $ref_user_income = WeeklyIncome::where('user_id', $ref_user->id)->first();
-            // $ref_user_income->weekly_income += $ref_user_bonus;
-            // $ref_user_income->save();
-            // $ref_user_package->current_total_income += $ref_user_bonus;
-            // $ref_user_package->save();
-            // if($ref_user_package->current_total_income >= $package->max_income){
-            //     self::release_package($package, $ref_user);
-            // }
-            // self::generate_package_transactions($package, $ref_user, $user, $ref_user_bonus, STATUS::PACKAGE_INVITE_BONUS);
-            // self::generate_transactions($package, $ref_user, $user, $ref_user_bonus, STATUS::PACKAGE_INVITE_BONUS);
         }
         
         // self::generate_bonus_distributions($package, $user);
 
         $notify[] = ['success', 'Investment Plan purchased successfully'];
         return back()->withNotify($notify);
+    }
+
+    private function get_bonus_handle($user, $amount){
+
     }
 
     private function generate_package_users($package, $user)
@@ -298,31 +292,38 @@ class PackageController extends Controller
             if ($ref_user->id == 1) {
                 break;
             }
-            $is_user = self::check_user_purchased_package($package, $ref_user);
+            $is_user = self::check_user_purchased_package($ref_user);
             if ($is_user) {
                 $bonus = self::calc_ref_user_bonus($package, $percentage[$index++]);
                 $ref_user->balance += $bonus;
                 $ref_user->save();
-                // $ref_user_package = PackageUser::where('status', STATUS::PACKAGE_PURCHASED)->where('user_id', $ref_user->id)->where('package_id', $package->id)->first();
-                $ref_user_income_package = PackageIncomeUser::where('status', STATUS::PACKAGE_PURCHASED)->where('user_id', $ref_user->id)->where('package_id', $package->id)->first();
-                if($ref_user_income_package){
-                    $user_weekly_income = WeeklyIncome::where('user_id', $ref_user->id)->first();
-                    $ref_user_income_package->current_total_income += $bonus;
-                    $ref_user_income_package->save();
-                    $user_weekly_income->weekly_income += $bonus;
-                    $user_weekly_income->save();
-                    
-                    if($ref_user_income_package->current_total_income >= $package->max_income){
+                $admin_bonus -= $bonus;
+                self::generate_package_transactions($package, $ref_user, $user, $bonus, STATUS::PACKAGE_NETWORK_BONUS);
+                self::generate_transactions($package, $ref_user, $user, $bonus, STATUS::PACKAGE_NETWORK_BONUS);
+
+                $user_weekly_income = WeeklyIncome::where('user_id', $ref_user->id)->first();
+                $user_weekly_income->weekly_income += $bonus;
+                $user_weekly_income->save();
+
+                $ref_user_packages = PackageUser::where('status', STATUS::PACKAGE_PURCHASED)->where('user_id', $ref_user->id)->orderBy('created_at', 'asc')->get();
+                foreach($ref_user_packages as $ref_user_package){
+                    $ref_user_income_package = PackageIncomeUser::where('status', STATUS::PACKAGE_PURCHASED)->where('user_id', $ref_user_package->user_id)->where('package_id', $ref_user_package->package_id)->first();
+                    $package_uncom_amount = $ref_user_income_package->max_income - $ref_user_income_package->current_total_income;
+                    if($bonus >= $package_uncom_amount){
+                        $ref_user_package->status = STATUS::PACKAGE_RELEASED;
+                        $ref_user_package->save();
                         $ref_user_income_package->current_total_income = 0;
                         $ref_user_income_package->current_daily_income = 0;
                         $ref_user_income_package->status = STATUS::PACKAGE_RELEASED;
                         $ref_user_income_package->save();
-                        self::release_package($package, $ref_user);
+                        $bonus -= $package_uncom_amount;
+                    } else{
+                        $ref_user_income_package->current_total_income += $bonus;
+                        $ref_user_income_package->save();
+                        $bonus = 0;
                     }
+                    if($bonus == 0) break;
                 }
-                $admin_bonus -= $bonus;
-                self::generate_package_transactions($package, $ref_user, $user, $bonus, STATUS::PACKAGE_NETWORK_BONUS);
-                self::generate_transactions($package, $ref_user, $user, $bonus, STATUS::PACKAGE_NETWORK_BONUS);
             }
             $temp_user = $ref_user;
             $ref_user = User::where('username', $temp_user->ref_user)->first();
@@ -347,9 +348,9 @@ class PackageController extends Controller
         return $package->price * ($package->bonus_price / 100) * $percentage / 100;
     }
 
-    private function check_user_purchased_package($package, $user)
+    private function check_user_purchased_package($user)
     {
-        $temp_user = PackageUser::where('status', STATUS::PACKAGE_PURCHASED)->where('package_id', $package->id)->where('user_id', $user->id)->first();
+        $temp_user = PackageUser::where('status', STATUS::PACKAGE_PURCHASED)->where('user_id', $user->id)->first();
         if ($temp_user) return true;
         return false;
     }
