@@ -13,7 +13,7 @@
                 <div class="d-flex justify-content-between mb-3 flex-wrap gap-1 text-end">
                     <h3 class="dashboard-title">@lang('Start your Invest') <i class="fas fa-question-circle text-muted text--small"
                             data-bs-toggle="tooltip" data-bs-placement="top" title="@lang('The invest will decrease your balance. Please wait the duration suggested, you will give profit every duration!')"></i></h3>
-                    <a class="btn btn--base btn--smd" href="{{ route('user.package.history') }}">@lang('Invest Transaction History')</a>
+                    <a class="btn btn--base btn--smd" href="{{ route('user.package.history') }}">@lang('My Plans')</a>
                 </div>
                 <div class="col-md-12">
                     <div class="accordion table--acordion" id="transactionAccordion">
