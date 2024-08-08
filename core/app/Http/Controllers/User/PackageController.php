@@ -30,10 +30,10 @@ class PackageController extends Controller
             ->orderBy('id', 'desc') // Add this line to order by id in descending order  
             ->paginate(getPaginate(10));
         foreach ($packages as $package) {
-            // $package_user = PackageUser::where('status', STATUS::PACKAGE_PURCHASED)->where('user_id', $user->id)->where('package_id', $package->id)->first();
+            $package_user = PackageUser::where('status', STATUS::PACKAGE_PURCHASED)->where('user_id', $user->id)->where('package_id', $package->id)->first();
             $package_income_user = PackageIncomeUser::where('status', STATUS::PACKAGE_PURCHASED)->where('user_id', $user->id)->where('package_id', $package->id)->first();
-            if ($package_income_user) {
-                if ($package_income_user->status == STATUS::PACKAGE_PURCHASED) {
+            if ($package_user) {
+                if ($package_user->status == STATUS::PACKAGE_PURCHASED) {
                     $package->active = 1;
                     $package->today_income = $package_income_user->current_daily_income;
                     $package->total_income = $package_income_user->current_total_income;
@@ -105,22 +105,43 @@ class PackageController extends Controller
         self::generate_transactions($package, $user, $user, $package->price, STATUS::PACKAGE_PURCHASED);
         
         $ref_user = User::where('username', $user->ref_user)->first();
-        $ref_user_package = PackageUser::where('status', STATUS::PACKAGE_PURCHASED)->where('user_id', $ref_user->id)->where('package_id', $package_id)->first();
-        if($ref_user_package){
-            $ref_user_percent = 5;
-            $ref_user_bonus = $package->price * $ref_user_percent / 100;
-            $ref_user->balance += $ref_user_bonus;
-            $ref_user->save();
-            $ref_user_income = WeeklyIncome::where('user_id', $ref_user->id)->first();
-            $ref_user_income->weekly_income += $ref_user_bonus;
-            $ref_user_income->save();
-            $ref_user_package->current_total_income += $ref_user_bonus;
-            $ref_user_package->save();
-            if($ref_user_package->current_total_income >= $package->max_income){
-                self::release_package($package, $ref_user);
+        $ref_user_packages = PackageUser::where('status', STATUS::PACKAGE_PURCHASED)->where('user_id', $ref_user->id)->orderBy('created_at', 'asc')->get();
+        $ref_user_percent = 5;
+        $ref_user_bonus = $package->price * $ref_user_percent / 100;
+        $ref_user->balance += $ref_user_bonus;
+        $ref_user->save();
+
+        self::generate_transactions($package, $ref_user, $user, $ref_user_bonus, STATUS::PACKAGE_INVITE_BONUS);
+        self::generate_package_transactions($package, $ref_user, $user, $ref_user_bonus, STATUS::PACKAGE_INVITE_BONUS);
+
+        if($ref_user_packages){
+            foreach($ref_user_packages as $ref_user_package){
+                $ref_user_income_package = PackageIncomeUser::where('user_id', $ref_user_package->user_id)->where('package_id', $ref_user_package->package_id)->first();
+                $package_uncom_amount = $ref_user_income_package->max_income - $ref_user_income_package->current_total_income;
+                if($ref_user_bonus >= $package_uncom_amount){
+                    $ref_user_package->status = STATUS::PACKAGE_RELEASED;
+                    $ref_user_package->save();
+                    $ref_user_income_package->current_total_income = 0;
+                    $ref_user_income_package->current_daily_income = 0;
+                    $ref_user_income_package->save();
+                    $ref_user_bonus -= $package_uncom_amount;
+                } else{
+                    $ref_user_income_package->current_total_income += $ref_user_bonus;
+                    $ref_user_income_package->save();
+                    $ref_user_bonus = 0;
+                }
+                if($ref_user_bonus == 0) break;
             }
-            self::generate_package_transactions($package, $ref_user, $user, $ref_user_bonus, STATUS::PACKAGE_INVITE_BONUS);
-            self::generate_transactions($package, $ref_user, $user, $ref_user_bonus, STATUS::PACKAGE_INVITE_BONUS);
+            // $ref_user_income = WeeklyIncome::where('user_id', $ref_user->id)->first();
+            // $ref_user_income->weekly_income += $ref_user_bonus;
+            // $ref_user_income->save();
+            // $ref_user_package->current_total_income += $ref_user_bonus;
+            // $ref_user_package->save();
+            // if($ref_user_package->current_total_income >= $package->max_income){
+            //     self::release_package($package, $ref_user);
+            // }
+            // self::generate_package_transactions($package, $ref_user, $user, $ref_user_bonus, STATUS::PACKAGE_INVITE_BONUS);
+            // self::generate_transactions($package, $ref_user, $user, $ref_user_bonus, STATUS::PACKAGE_INVITE_BONUS);
         }
         
         // self::generate_bonus_distributions($package, $user);
@@ -343,8 +364,8 @@ class PackageController extends Controller
             if ($duration_unit == "day") {
                 $duration = $duration * 24;
             }
-            if ($package_user->updated_at->lt(Carbon::now()->subHours($duration))) {
-            // if ($package_user->updated_at->lt(Carbon::now()->subSeconds(1))) {     // For test
+            // if ($package_user->updated_at->lt(Carbon::now()->subHours($duration))) {
+            if ($package_user->updated_at->lt(Carbon::now()->subSeconds(5))) {     // For test
                 if ($current_day == 6) {
                     
                     if ($user_weekly_income && $today_deposit_amount >= $user_weekly_income->weekly_fee) {
