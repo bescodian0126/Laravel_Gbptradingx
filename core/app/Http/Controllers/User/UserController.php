@@ -46,6 +46,11 @@ class UserController extends Controller
         $totalBv = @$user->userExtra->bv_left + @$user->userExtra->bv_right;
         $logs = UserExtra::where('user_id', $user->id)->firstOrFail();
         $weekly_info = WeeklyIncome::where('user_id', $user->id)->first();
+        if($weekly_info == null){
+            $weekly_info = new WeeklyIncome();
+            $weekly_info->user_id = $user->id;
+            $weekly_info->save();
+        }
         return view($this->activeTemplate . 'user.dashboard', compact('pageTitle', 'user', 'totalDeposit', 'submittedDeposit', 'pendingDeposit', 'rejectedDeposit', 'totalWithdraw', 'submittedWithdraw', 'pendingWithdraw', 'rejectWithdraw', 'totalRef', 'totalBvCut', 'totalLeft', 'totalRight', 'totalBv', 'logs', 'weekly_info'));
     }
 

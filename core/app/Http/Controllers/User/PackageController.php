@@ -10,8 +10,9 @@ use App\Models\PackageTransaction;
 use App\Models\Node;
 use App\Models\User;
 use App\Models\Deposit;
-use App\Models\PackageInvite;
+use App\Models\PackageIncomeUser;
 use App\Constants\Status;
+use App\Models\PackageInvite;
 use App\Models\Transaction;
 use App\Models\WeeklyIncome;
 use Carbon\Carbon;
@@ -29,12 +30,13 @@ class PackageController extends Controller
             ->orderBy('id', 'desc') // Add this line to order by id in descending order  
             ->paginate(getPaginate(10));
         foreach ($packages as $package) {
-            $package_user = PackageUser::where('user_id', $user->id)->where('package_id', $package->id)->first();
-            if ($package_user) {
-                if ($package_user->status == STATUS::PACKAGE_PURCHASED) {
+            // $package_user = PackageUser::where('status', STATUS::PACKAGE_PURCHASED)->where('user_id', $user->id)->where('package_id', $package->id)->first();
+            $package_income_user = PackageIncomeUser::where('status', STATUS::PACKAGE_PURCHASED)->where('user_id', $user->id)->where('package_id', $package->id)->first();
+            if ($package_income_user) {
+                if ($package_income_user->status == STATUS::PACKAGE_PURCHASED) {
                     $package->active = 1;
-                    $package->today_income = $package_user->current_daily_income;
-                    $package->total_income = $package_user->current_total_income;
+                    $package->today_income = $package_income_user->current_daily_income;
+                    $package->total_income = $package_income_user->current_total_income;
                 } else {
                     $package->active = 0;
                     $package->today_income = 0;
@@ -103,12 +105,24 @@ class PackageController extends Controller
         self::generate_transactions($package, $user, $user, $package->price, STATUS::PACKAGE_PURCHASED);
         
         $ref_user = User::where('username', $user->ref_user)->first();
-        $ref_user_percent = 5;
-        $ref_user_bonus = $package->price * $ref_user_percent / 100;
-        $ref_user->balance += $ref_user_bonus;
-        $ref_user->save();
-        self::generate_package_transactions($package, $ref_user, $user, $ref_user_bonus, STATUS::PACKAGE_INVITE_BONUS);
-        self::generate_transactions($package, $ref_user, $user, $ref_user_bonus, STATUS::PACKAGE_INVITE_BONUS);
+        $ref_user_package = PackageUser::where('status', STATUS::PACKAGE_PURCHASED)->where('user_id', $ref_user->id)->where('package_id', $package_id)->first();
+        if($ref_user_package){
+            $ref_user_percent = 5;
+            $ref_user_bonus = $package->price * $ref_user_percent / 100;
+            $ref_user->balance += $ref_user_bonus;
+            $ref_user->save();
+            $ref_user_income = WeeklyIncome::where('user_id', $ref_user->id)->first();
+            $ref_user_income->weekly_income += $ref_user_bonus;
+            $ref_user_income->save();
+            $ref_user_package->current_total_income += $ref_user_bonus;
+            $ref_user_package->save();
+            if($ref_user_package->current_total_income >= $package->max_income){
+                self::release_package($package, $ref_user);
+            }
+            self::generate_package_transactions($package, $ref_user, $user, $ref_user_bonus, STATUS::PACKAGE_INVITE_BONUS);
+            self::generate_transactions($package, $ref_user, $user, $ref_user_bonus, STATUS::PACKAGE_INVITE_BONUS);
+        }
+        
         // self::generate_bonus_distributions($package, $user);
 
         $notify[] = ['success', 'Investment Plan purchased successfully'];
@@ -128,6 +142,18 @@ class PackageController extends Controller
         $package_user->weekly_fee = $package->weekly_fee;
         $package_user->status = STATUS::PACKAGE_PURCHASED;
         $package_user->save();
+
+        $package_income_user = new PackageIncomeUser();
+        $package_income_user->user_id = $user->id;
+        $package_income_user->package_id = $package->id;
+        $package_income_user->package_type = $package->type;
+        $package_income_user->current_total_income = 0;
+        $package_income_user->current_daily_income = $package->start_income * $package->price / 100;
+        $package_income_user->max_income = $package->max_income;
+        $package_income_user->rising_income = $package->rising_income * $package->price / 100;
+        $package_income_user->weekly_fee = $package->weekly_fee;
+        $package_income_user->status = STATUS::PACKAGE_PURCHASED;
+        $package_income_user->save();
     }
 
     private function generate_package_transactions($package, $user, $sender, $amount, $mode)
@@ -250,6 +276,17 @@ class PackageController extends Controller
                 $bonus = self::calc_ref_user_bonus($package, $percentage[$index++]);
                 $ref_user->balance += $bonus;
                 $ref_user->save();
+                // $ref_user_package = PackageUser::where('status', STATUS::PACKAGE_PURCHASED)->where('user_id', $ref_user->id)->where('package_id', $package->id)->first();
+                $ref_user_income_package = PackageIncomeUser::where('status', STATUS::PACKAGE_PURCHASED)->where('user_id', $ref_user->id)->where('package_id', $package->id)->first();
+                $user_weekly_income = WeeklyIncome::where('user_id', $ref_user->id)->first();
+                $ref_user_income_package->current_total_income += $bonus;
+                $ref_user_income_package->save();
+                $user_weekly_income->weekly_income += $bonus;
+                $user_weekly_income->save();
+                
+                if($ref_user_income_package->current_total_income >= $package->max_income){
+                    self::release_package($package, $ref_user);
+                }
                 $admin_bonus -= $bonus;
                 self::generate_package_transactions($package, $ref_user, $user, $bonus, STATUS::PACKAGE_NETWORK_BONUS);
                 self::generate_transactions($package, $ref_user, $user, $bonus, STATUS::PACKAGE_NETWORK_BONUS);
@@ -264,9 +301,17 @@ class PackageController extends Controller
         }
     }
 
+    private function release_package($package, $user){
+        $package_user = PackageUser::where('package_id', $package->id)->where('user_id', $user->id)->first();
+        $package_user->status = STATUS::PACKAGE_RELEASED;
+        $package_user->current_total_income = 0;
+        $package_user->current_daily_income = 0;
+        $package_user->save();
+    }
+
     public function calc_ref_user_bonus($package, $percentage)
     {
-        return $package->price * ($package->start_income / 100) * ($package->bonus_price / 100) * $percentage / 100;
+        return $package->price * ($package->bonus_price / 100) * $percentage / 100;
     }
 
     private function check_user_purchased_package($package, $user)
@@ -287,6 +332,7 @@ class PackageController extends Controller
             $package = Package::where('id', $package_user->package_id)->first();
             $user = User::where('id', $package_user->user_id)->first();
             $user_weekly_income = WeeklyIncome::where('user_id', $user->id)->first();
+            $package_income_user = PackageIncomeUser::where('status', Status::PACKAGE_PURCHASED)->where('package_id', $package->id)->where('user_id', $user->id)->first();
             $duration = $package->duration;
             $duration_unit = $package->repeat_unit;
             $deposits = Deposit::where('user_id', $user->id)->where('status', 1)->whereDate('created_at', $today)->get();
@@ -297,14 +343,14 @@ class PackageController extends Controller
             if ($duration_unit == "day") {
                 $duration = $duration * 24;
             }
-            if ($package_user->updated_at->lt(Carbon::now()->subHours($duration))) {
-            // if ($package_user->updated_at->lt(Carbon::now()->subMinutes(1))) {     // For test
-                if ($current_day == 6) {
+            // if ($package_user->updated_at->lt(Carbon::now()->subHours($duration))) {
+            if ($package_user->updated_at->lt(Carbon::now()->subSeconds(1))) {     // For test
+                if ($current_day == 4) {
                     
                     if ($user_weekly_income && $today_deposit_amount >= $user_weekly_income->weekly_fee) {
                         $user->weekly_paid = Status::USER_WEEKLY_PAID;
-                        $release_amount = $package_user->current_daily_income;
-                        if ($package_user->current_total_income + $release_amount < $package_user->max_income) {
+                        $release_amount = $package_income_user->current_daily_income;
+                        if ($package_income_user->current_total_income + $release_amount < $package_income_user->max_income) {
                             $user->balance += $release_amount;
                             $user->save();
                             $user_weekly_income->weekly_income = 0;
@@ -313,11 +359,28 @@ class PackageController extends Controller
                             self::generate_package_transactions($package, $user, $admin, $release_amount, STATUS::PACKAGE_GET_DAILY_INCOME);
                             self::generate_transactions($package, $user, $admin, $release_amount, STATUS::PACKAGE_GET_DAILY_INCOME);
                             self::generate_bonus_distributions($package, $user);
-                            $package_user->current_total_income = $package_user->current_total_income + $release_amount;
-                            $package_user->current_daily_income = $release_amount + $package_user->rising_income;
-                            $package_user->save();
+                            // $package_user->current_total_income = $package_user->current_total_income + $release_amount;
+                            // $package_user->current_daily_income = $release_amount + $package_user->rising_income;
+                            // $package_user->save();
+                            $package_income_user->current_total_income = $package_income_user->current_total_income + $release_amount;
+                            $package_income_user->current_daily_income = $release_amount + $package_income_user->rising_income;
+                            $package_income_user->save();
                         } else {
+                            $release_amount = $package_income_user->current_total_income + $release_amount - $package_income_user->max_income;
+                            $user->balance += $release_amount;
+                            $user->save();
+                            $user_weekly_income->weekly_income = 0;
+                            $user_weekly_income->weekly_fee = 0;
+                            $user_weekly_income->save();
+                            self::generate_package_transactions($package, $user, $admin, $release_amount, STATUS::PACKAGE_GET_DAILY_INCOME);
+                            self::generate_transactions($package, $user, $admin, $release_amount, STATUS::PACKAGE_GET_DAILY_INCOME);
+                            self::generate_bonus_distributions($package, $user);
+                            $package_income_user->current_total_income = 0;
+                            $package_income_user->current_daily_income = 0;
+                            $package_income_user->status = STATUS::PACKAGE_RELEASED;
+                            $package_income_user->save();
                             $package_user->status = STATUS::PACKAGE_RELEASED;
+                            $package_user->save();
                         }
                     } else {
                         $user->weekly_paid = Status::USER_WEEKLY_NOT_PAID;
@@ -325,26 +388,52 @@ class PackageController extends Controller
                     $user->save();
                 }else{
                     if($user->weekly_paid != Status::USER_WEEKLY_NOT_PAID){
-                        $release_amount = $package_user->current_daily_income;
-                        if ($package_user->current_total_income + $release_amount < $package_user->max_income) {
+                        $release_amount = $package_income_user->current_daily_income;
+                        if ($package_income_user->current_total_income + $release_amount < $package_income_user->max_income) {
                             $user->balance += $release_amount;
                             $user->save();
                             $user_weekly_income->weekly_income += $release_amount;
-                            $user_weekly_income->weekly_fee += $release_amount * $package_user->weekly_fee / 100;
+                            $user_weekly_income->weekly_fee += $release_amount * $package_income_user->weekly_fee / 100;
+                            $user_weekly_income->save();
+                            $package_income_user->current_total_income = $package_income_user->current_total_income + $release_amount;
+                            $package_income_user->current_daily_income = $release_amount + $package_income_user->rising_income;
+                            $package_income_user->save();
+                            self::generate_package_transactions($package, $user, $admin, $release_amount, STATUS::PACKAGE_GET_DAILY_INCOME);
+                            self::generate_transactions($package, $user, $admin, $release_amount, STATUS::PACKAGE_GET_DAILY_INCOME);
+                            self::generate_bonus_distributions($package, $user);
+                            
+                        } else {
+                            $release_amount = $package_income_user->current_total_income + $release_amount - $package_income_user->max_income;
+                            $user->balance += $release_amount;
+                            $user->save();
+                            $user_weekly_income->weekly_income += $release_amount;
+                            $user_weekly_income->weekly_fee += $release_amount * $package_income_user->weekly_fee / 100;
                             $user_weekly_income->save();
                             self::generate_package_transactions($package, $user, $admin, $release_amount, STATUS::PACKAGE_GET_DAILY_INCOME);
                             self::generate_transactions($package, $user, $admin, $release_amount, STATUS::PACKAGE_GET_DAILY_INCOME);
                             self::generate_bonus_distributions($package, $user);
-                            $package_user->current_total_income = $package_user->current_total_income + $release_amount;
-                            $package_user->current_daily_income = $release_amount + $package_user->rising_income;
-                            $package_user->save();
-                        } else {
+                            $package_income_user->current_total_income = 0;
+                            $package_income_user->current_daily_income = 0;
+                            $package_income_user->status = STATUS::PACKAGE_RELEASED;
+                            $package_income_user->save();
                             $package_user->status = STATUS::PACKAGE_RELEASED;
+                            $package_user->save();
                         }
                     }
                 }
+                $package_user->save();
             }
-            if ($current_day == 6) {
+        }
+
+        $users = User::where('id', '!=', 1)->orderBy('created_at', 'desc')->get();
+        foreach($users as $user){
+            $deposits = Deposit::where('user_id', $user->id)->where('status', 1)->whereDate('created_at', $today)->get();
+            $today_deposit_amount = 0;
+            foreach ($deposits as $deposit) {
+                $today_deposit_amount += $deposit->amount;
+            }
+            $user_weekly_income = WeeklyIncome::where('user_id', $user->id)->first();
+            if ($current_day == 4) {
                 if($today_deposit_amount >= $user_weekly_income->weekly_fee){
                     $user->weekly_paid = STATUS::USER_WEEKLY_PAID;
                     $user->save();

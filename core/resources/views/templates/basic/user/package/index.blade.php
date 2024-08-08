@@ -34,16 +34,20 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="col-lg-4 col-sm-5 col-7 order-sm-2 order-3 content-wrapper mt-sm-0 mt-3">
-                                            <p class="text-muted font-size--14px">@lang('Total Income') : <b>{{ intval($package->total_income) }} {{ __($general->cur_text) }}</b></p>
-                                            <p class="text-muted font-size--14px">@lang('Today Income') : <b>{{ intval($package->today_income) }} {{ __($general->cur_text) }}</b></p>
+                                        <div
+                                            class="col-lg-4 col-sm-5 col-7 order-sm-2 order-3 content-wrapper mt-sm-0 mt-3">
+                                            <p class="text-muted font-size--14px">@lang('Total Income') :
+                                                <b>{{ number_format($package->total_income, $package->total_income - floor($package->total_income) == 0 ? 0 : 1, '.', '') }}
+                                                    {{ __($general->cur_text) }}</b></p>
+                                            <p class="text-muted font-size--14px">@lang('Today Income') :
+                                                <b>{{ number_format($package->today_income, $package->today_income - floor($package->today_income) == 0 ? 0 : 1, '.', '') }}
+                                                    {{ __($general->cur_text) }}</b></p>
                                         </div>
                                         <div class="col-lg-4 col-sm-12 col-12 order-sm-3 order-2 text-end amount-wrapper">
                                             <p>
-                                                <b>@lang('Required balance'): {{ showAmount($package->price) }}
+                                                <b>@lang('Required balance'): {{ number_format($package->price, $package->price - floor($package->price) == 0 ? 0 : 1, '.', '') }}
                                                     {{ __($general->cur_text) }}</b><br>
-                                                <b class="fw-bold">@lang('Maxiumn Returning Value'):
-                                                    {{ showAmount($package->max_income) }}
+                                                <b class="fw-bold">@lang('Maxiumn Returning Value'): {{ number_format($package->max_income, $package->max_income - floor($package->max_income) == 0 ? 0 : 1, '.', '') }}
                                                     {{ __($general->cur_text) }}</b>
                                             </p>
 
@@ -61,30 +65,31 @@
                                             </li>
                                             <li>
                                                 <span class="caption">@lang('Maxiumn Returning Value')</span>
-                                                <span
-                                                    class="value">{{ showAmount($package->max_income) }}
+                                                <span class="value">{{ showAmount($package->max_income) }}
                                                     {{ __($general->cur_text) }}</span>
                                             </li>
                                             <li>
                                                 <span class="caption">@lang('Daily Income')</span>
-                                                <span class="value">{{ showAmount($package->start_income * $package->price / 100) }}
+                                                <span
+                                                    class="value">{{ showAmount(($package->start_income * $package->price) / 100) }}
                                                     {{ __($general->cur_text) }}</span>
                                             </li>
                                             <li>
                                                 <span class="caption">@lang('Contributing Network Bonus Amount')</span>
-                                                <span class="value">{{ showAmount($package->bonus_price * $package->price / 100) }}
+                                                <span
+                                                    class="value">{{ showAmount(($package->bonus_price * $package->price) / 100) }}
                                                     {{ __($general->cur_text) }}</span>
                                             </li>
                                             <li>
                                                 <span class="caption">@lang('Brokerage fee on profit(weekly)')</span>
-                                                <span class="value">{{$package->weekly_fee}} (%)</span>
+                                                <span class="value">{{ $package->weekly_fee }} (%)</span>
                                             </li>
                                             <li>
                                                 <span class="caption">@lang('Description')</span>
                                                 <span class="value">{{ $package->description }}</span>
                                             </li>
                                             <li>
-                                                @if(auth()->user()->weekly_paid == Status::USER_WEEKLY_NOT_PAID)
+                                                @if (auth()->user()->weekly_paid == Status::USER_WEEKLY_NOT_PAID)
                                                     <button class="btn btn--danger w-100 disabled mt-2" type="button">
                                                         @lang('Weekly Deposit is not enough')
                                                     </button>
@@ -97,11 +102,11 @@
                                                         data-id="{{ $package->id }}" data-name="{{ $package->name }}"
                                                         data-price="{{ $package->price }}"
                                                         data-max_income="{{ showAmount($package->max_income) }}"
-                                                        data-bonus_price="{{ $package->bonus_price * $package->price / 100 }}"
-                                                        data-start_income="{{$package->start_income * $package->price / 100 }}"
-                                                        data-rising_income="{{$package->rising_income * $package->price / 100 }}"
+                                                        data-bonus_price="{{ ($package->bonus_price * $package->price) / 100 }}"
+                                                        data-start_income="{{ ($package->start_income * $package->price) / 100 }}"
+                                                        data-rising_income="{{ ($package->rising_income * $package->price) / 100 }}"
                                                         data-invite_bonus="{{ $package->invite_bonus }}"
-                                                        data-weekly_fee="{{$package->weekly_fee}}"
+                                                        data-weekly_fee="{{ $package->weekly_fee }}"
                                                         data-invite_count="{{ $package->invite_count }}" type="button">
                                                         @lang('Start')
                                                     </button>
