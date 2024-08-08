@@ -2,14 +2,14 @@
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title m-0">@lang('Profit on Plan info')</h5>
+                <h5 class="modal-title m-0">@lang('Maximum Income Info')</h5>
                 <button class="close" data-bs-dismiss="modal" type="button" aria-label="Close">
                     <i class="las la-times"></i>
                 </button>
             </div>
             <div class="modal-body">
                 <span
-                    class="text--success">@lang('When you subscribe this plan, You will get this bonus profit after duration time').</span>
+                    class="text--success">@lang('When you subscribe this plan, You will get this Maximum Income').</span>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-dark w-100" data-bs-dismiss="modal" type="button">@lang('Close')</button>
@@ -48,14 +48,14 @@
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title m-0">@lang('Commission to tree info')</h5>
+                <h5 class="modal-title m-0">@lang('Period Info')</h5>
                 <button class="close" data-bs-dismiss="modal" type="button" aria-label="Close">
                     <i class="las la-times"></i>
                 </button>
             </div>
             <div class="modal-body">
                 <span
-                    class="text--success">@lang('When you subscribe this plan, after duration time, you will receive profit money').
+                    class="text--success">@lang('After this period time of purchasing plan, you will get regular income').
                 </span>
 
             </div>
