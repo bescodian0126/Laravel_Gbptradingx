@@ -74,7 +74,7 @@
 
         <div class="row g-3 mt-3 mb-4">
 
-            <div class="col-lg-4">
+            <div class="col-lg-6">
                 <div class="dashboard-widget">
                     <div class="d-flex justify-content-between">
                         <h5 class="text-secondary">@lang('Total Deposit')</h5>
@@ -99,7 +99,7 @@
                 </div>
             </div>
 
-            <div class="col-lg-4">
+            <div class="col-lg-6">
                 <div class="dashboard-widget">
                     <div class="d-flex justify-content-between">
                         <h5 class="text-secondary">@lang('Total Widthdraw')</h5>
@@ -124,33 +124,18 @@
                 </div>
             </div>
 
-            <div class="col-lg-4">
+            <div class="col-lg-3">
                 <div class="dashboard-widget">
                     <div class="d-flex justify-content-between">
                         <h5 class="text-secondary">@lang('Total Referral Commission')</h5>
                     </div>
                     <h3 class="text--secondary my-4">{{ showAmount($user->total_ref_com) }} {{ __($general->cur_text) }}
                     </h3>
-                    <div class="widget-lists">
-                        <div class="row">
-                            <div class="col-4">
-                                <p class="fw-bold">@lang('Referrals')</p>
-                                <span>{{ $totalRef }}</span>
-                            </div>
-                            <div class="col-4">
-                                <p class="fw-bold">@lang('Left')</p>
-                                <span>{{ $totalLeft }}</span>
-                            </div>
-                            <div class="col-4">
-                                <p class="fw-bold">@lang('Right')</p>
-                                <span>{{ $totalRight }}</span>
-                            </div>
-                        </div>
-                    </div>
+                    
                 </div>
             </div>
 
-            <div class="col-lg-4">
+            <div class="col-lg-3">
                 <div class="dashboard-widget">
                     <div class="d-flex justify-content-between">
                         <h5 class="text-secondary">@lang('Total Invest')</h5>
@@ -160,7 +145,7 @@
                 </div>
             </div>
 
-            <div class="col-lg-4">
+            <div class="col-lg-3">
                 <div class="dashboard-widget">
                     <div class="d-flex justify-content-between">
                         <h5 class="text-secondary">@lang('Weekly Income')</h5>
@@ -170,7 +155,7 @@
                 </div>
             </div>
 
-            <div class="col-lg-4">
+            <div class="col-lg-3">
                 <a href="{{ route('user.deposit.index', ['brokerage_fee' => $weekly_info->weekly_fee]) }}"  
                    class="text-decoration-none text-dark w-100">  
                     <div class="dashboard-widget {{ auth()->user()->weekly_paid == 1 ? 'bg-danger' : '' }}">
