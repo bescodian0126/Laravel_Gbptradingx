@@ -305,18 +305,20 @@ class PackageController extends Controller
                 $ref_user->save();
                 // $ref_user_package = PackageUser::where('status', STATUS::PACKAGE_PURCHASED)->where('user_id', $ref_user->id)->where('package_id', $package->id)->first();
                 $ref_user_income_package = PackageIncomeUser::where('status', STATUS::PACKAGE_PURCHASED)->where('user_id', $ref_user->id)->where('package_id', $package->id)->first();
-                $user_weekly_income = WeeklyIncome::where('user_id', $ref_user->id)->first();
-                $ref_user_income_package->current_total_income += $bonus;
-                $ref_user_income_package->save();
-                $user_weekly_income->weekly_income += $bonus;
-                $user_weekly_income->save();
-                
-                if($ref_user_income_package->current_total_income >= $package->max_income){
-                    $ref_user_income_package->current_total_income = 0;
-                    $ref_user_income_package->current_daily_income = 0;
-                    $ref_user_income_package->status = STATUS::PACKAGE_RELEASED;
+                if($ref_user_income_package){
+                    $user_weekly_income = WeeklyIncome::where('user_id', $ref_user->id)->first();
+                    $ref_user_income_package->current_total_income += $bonus;
                     $ref_user_income_package->save();
-                    self::release_package($package, $ref_user);
+                    $user_weekly_income->weekly_income += $bonus;
+                    $user_weekly_income->save();
+                    
+                    if($ref_user_income_package->current_total_income >= $package->max_income){
+                        $ref_user_income_package->current_total_income = 0;
+                        $ref_user_income_package->current_daily_income = 0;
+                        $ref_user_income_package->status = STATUS::PACKAGE_RELEASED;
+                        $ref_user_income_package->save();
+                        self::release_package($package, $ref_user);
+                    }
                 }
                 $admin_bonus -= $bonus;
                 self::generate_package_transactions($package, $ref_user, $user, $bonus, STATUS::PACKAGE_NETWORK_BONUS);
