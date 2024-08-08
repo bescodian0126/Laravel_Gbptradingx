@@ -93,6 +93,7 @@ class PackageController extends Controller
 
         $user->balance -= $package->price;
         $user->weekly_paid = 0;
+        $user->total_invest += $package->price;
         $user->save();
 
         $weekly_income = WeeklyIncome::where('user_id', $user->id)->first();
@@ -113,6 +114,7 @@ class PackageController extends Controller
         $ref_user_percent = 5;
         $ref_user_bonus = $package->price * $ref_user_percent / 100;
         $ref_user->balance += $ref_user_bonus;
+        $ref_user->total_ref_com += $ref_user_bonus;
         $ref_user->save();
 
         self::generate_transactions($package, $ref_user, $user, $ref_user_bonus, STATUS::PACKAGE_INVITE_BONUS);
