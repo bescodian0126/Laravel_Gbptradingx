@@ -20,7 +20,7 @@
                                         data-bs-target="#profitInfoModal"><i class="fas fa-question-circle"></i></span>
                                 </li>
                                 <li>
-                                    @lang('Daily Income') : <span class="amount">{{ intval($plan->start_income) }}
+                                    @lang('Daily Income') : <span class="amount"> {{ number_format($plan->start_income * $plan->price / 100, $plan->start_income * $plan->price / 100 - floor($plan->start_income * $plan->price / 100) == 0 ? 0 : 1, '.', '') }} 
                                         {{ __($general->cur_text) }}</span>
                                     <span class="icon float-right" data-bs-toggle="modal"
                                         data-bs-target="#inviteCountModal"><i class="fas fa-question-circle"></i></span>
